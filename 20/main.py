@@ -1,5 +1,7 @@
 import argparse
 
+def read_map
+
 
 def part_1(file_path: str):
     pass

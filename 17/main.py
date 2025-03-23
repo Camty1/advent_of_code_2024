@@ -70,8 +70,14 @@ class InstructionSet:
 
         raise ValueError("7 is reserved, or you have an incorrect value")
 
-    def create_function_graph(self) -> tuple[dict[State, set[State]], dict[State, State]]:
-        state = (self.b, self.c, self._counter)
+    def reset(self, a: Optional[int] = None, b:Optional[int] = None, c: Optional[int] = None):
+        self._counter = 0
+        if a:
+            self.a = a
+        if b:
+            self.b = b
+        if c:
+            self.c = c
 
 
 def read_file(file_path: str) -> InstructionSet:
@@ -96,7 +102,23 @@ def part_1(file_path: str):
 
 
 def part_2(file_path: str):
-    pass
+    instruction_set = read_file(file_path)
+    b0 = instruction_set.b
+    c0 = instruction_set.c
+    prev_a = 0
+    start = len(instruction_set.instructions) - 2
+    while start >= 0:
+        desired = instruction_set.instructions[start:]
+        out: list[int] = []
+        x = 0
+        while out != desired:
+            instruction_set.reset(prev_a * 8 + x, b0, c0)
+            out = instruction_set.run_program()
+            x += 1
+        prev_a = prev_a * 8 + x - 1
+        print(prev_a)
+        start -= 1
+
 
 
 if __name__ == "__main__":
