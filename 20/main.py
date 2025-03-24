@@ -1,6 +1,7 @@
 import argparse
 from collections import defaultdict
 from dataclasses import dataclass
+from enum import Enum
 from itertools import product
 from typing import Optional
 
@@ -10,9 +11,36 @@ class Position:
     x: int
     y: int
 
+    def manhattan_distance(self, other: "Position") -> int:
+        return abs(other.x - self.x) + abs(other.y - self.y)
+
+    def __add__(self, other: "Position") -> "Position":
+        return Position(self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other: "Position") -> "Position":
+        return Position(self.x - other.x, self.y - other.y)
+
+
+class Direction(Enum):
+    RIGHT = 0
+    UP = 1
+    LEFT = 2
+    DOWN = 3
+
+    def steps(self) -> list[Position]:
+        if self == Direction.RIGHT:
+            return [Position(2, 0), Position(2, -1), Position(2, 1), Position(3, 0)]
+        elif self == Direction.UP:
+            return [Position(0, 2), Position(1, 2), Position(-1, 2), Position(0, 3)]
+        elif self == Direction.LEFT:
+            return [Position(-2, 0), Position(-2, 1), Position(-2, -1), Position(-3, 0)]
+        else:
+            return [Position(0, -2), Position(-1, -2), Position(1, -2), Position(0, -3)]
+
+
 
 @dataclass
-class race_map:
+class RaceMap:
     x_size: int
     y_size: int
     start: Position
@@ -35,7 +63,7 @@ class race_map:
 
 def read_file(
     file_path: str,
-) -> race_map:
+) -> RaceMap:
     with open(file_path, "r", encoding="UTF-8") as file:
         lines = file.readlines()
 
@@ -50,7 +78,7 @@ def read_file(
     for y, line in enumerate(lines):
         for x, character in enumerate(line.strip()):
             pos = Position(x, y)
-            if character in ["., S, E"]:
+            if character in ".SE":
                 path_positions.add(pos)
                 if character == "S":
                     start = pos
@@ -75,48 +103,49 @@ def read_file(
 
     assert start and end
 
-    return race_map(x_size, y_size, start, end, path_positions, obstacle_positions, graph)
+    return RaceMap(
+        x_size, y_size, start, end, path_positions, obstacle_positions, graph
+    )
 
 
 def get_path(
-    race_map: race_map,
-) -> tuple[
-    dict[Position, Optional[Position]],
-    dict[Position, Optional[Position]],
-    dict[Position, int],
-]:
-    next_pos: dict[Position, Optional[Position]] = {race_map.end: None}
-    prev_pos: dict[Position, Optional[Position]] = {race_map.start: None}
-    step: dict[Position, int] = {}
-
+    race_map: RaceMap,
+) -> list[Position]:
     queue: list[Position] = [race_map.start]
-    visited: set[Position] = set()
+    visited: list[Position] = []
     counter = 0
     while queue:
         current_pos = queue.pop()
-        visited.add(current_pos)
-        step[current_pos] = counter
+        visited.append(current_pos)
         for neighbor in race_map.graph[current_pos]:
             if neighbor not in visited and neighbor not in queue:
-                prev_pos[neighbor] = current_pos
                 queue.append(neighbor)
 
         counter += 1
 
-    current_pos = race_map.end
-    while prev_pos[current_pos]:
-        next_pos[prev_pos[current_pos]] = current_pos
-        current_pos = prev_pos[current_pos]
-
-    return next_pos, prev_pos, step
-
-def read_map
+    return visited
 
 
 def part_1(file_path: str):
     race_map = read_file(file_path)
-    next_pos, prev_pos, step = get_path(race_map)
-    
+    path = get_path(race_map)
+    path_steps = {position: i for i, position in enumerate(path)}
+    counter = 0
+    for position, ordinal in path_steps.items():
+        for direction in Direction:
+            for step in direction.steps():
+                new_pos = position + step
+                if new_pos in path_steps:
+                    delta = path_steps[new_pos] - ordinal
+                    if delta >= 100:
+                        counter += 1
+                    break
+
+    print(counter)
+
+
+
+
 
 
 def part_2(file_path: str):
