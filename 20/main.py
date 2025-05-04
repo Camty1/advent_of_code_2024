@@ -30,13 +30,20 @@ class Direction(Enum):
     def steps(self) -> list[Position]:
         if self == Direction.RIGHT:
             return [Position(2, 0), Position(2, -1), Position(2, 1), Position(3, 0)]
-        elif self == Direction.UP:
+        if self == Direction.UP:
             return [Position(0, 2), Position(1, 2), Position(-1, 2), Position(0, 3)]
-        elif self == Direction.LEFT:
+        if self == Direction.LEFT:
             return [Position(-2, 0), Position(-2, 1), Position(-2, -1), Position(-3, 0)]
-        else:
-            return [Position(0, -2), Position(-1, -2), Position(1, -2), Position(0, -3)]
+        return [Position(0, -2), Position(-1, -2), Position(1, -2), Position(0, -3)]
 
+    def shortcut(self) -> Position:
+        if self == Direction.RIGHT:
+            return Position(2, 0)
+        if self == Direction.UP:
+            return Position(0, 2)
+        if self == Direction.LEFT:
+            return Position(-2, 0)
+        return Position(0, -2)
 
 
 @dataclass
@@ -129,27 +136,53 @@ def get_path(
 def part_1(file_path: str):
     race_map = read_file(file_path)
     path = get_path(race_map)
-    path_steps = {position: i for i, position in enumerate(path)}
-    counter = 0
-    for position, ordinal in path_steps.items():
-        for direction in Direction:
-            for step in direction.steps():
-                new_pos = position + step
-                if new_pos in path_steps:
-                    delta = path_steps[new_pos] - ordinal
-                    if delta >= 100:
-                        counter += 1
-                    break
+    shortcuts: dict[tuple[Position, Position], int] = {}
+    cheat_size = 2
 
-    print(counter)
+    for start_index, start_position in enumerate(path):
+        for end_index, end_position in enumerate(path[start_index:]):
+            manhattan_distance = start_position.manhattan_distance(end_position)
+            shortcut_size = end_index - manhattan_distance
 
+            if manhattan_distance <= cheat_size and shortcut_size > 0:
+                shortcuts[(start_position, end_position)] = shortcut_size
 
+    shortcuts_by_size: dict[int, int] = defaultdict(int)
+    for shortcut_size in sorted(shortcuts.values()):
+        shortcuts_by_size[shortcut_size] += 1
 
+    running_sum = 0
+    for shortcut_length, num_shortcuts in shortcuts_by_size.items():
+        if shortcut_length >= 100:
+            running_sum += num_shortcuts
 
+    print(running_sum)
 
 
 def part_2(file_path: str):
-    pass
+    race_map = read_file(file_path)
+    path = get_path(race_map)
+    shortcuts: dict[tuple[Position, Position], int] = {}
+    cheat_size = 20
+
+    for start_index, start_position in enumerate(path):
+        for end_index, end_position in enumerate(path[start_index:]):
+            manhattan_distance = start_position.manhattan_distance(end_position)
+            shortcut_size = end_index - manhattan_distance
+
+            if manhattan_distance <= cheat_size and shortcut_size > 0:
+                shortcuts[(start_position, end_position)] = shortcut_size
+
+    shortcuts_by_size: dict[int, int] = defaultdict(int)
+    for shortcut_size in sorted(shortcuts.values()):
+        shortcuts_by_size[shortcut_size] += 1
+
+    running_sum = 0
+    for shortcut_length, num_shortcuts in shortcuts_by_size.items():
+        if shortcut_length >= 100:
+            running_sum += num_shortcuts
+
+    print(running_sum)
 
 
 if __name__ == "__main__":
